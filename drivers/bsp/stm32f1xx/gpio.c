@@ -6,16 +6,17 @@
 
 struct stm32_gpio_chip {
     struct gpio_chip gc;
-    void __iomem *base;
+    void *base;
 };
 
 void *gpiochip_get_data(struct gpio_chip *gc) {
-    return gc->gpiodev->data;
+    return gc->data;
 }
 
 static int stm32f1xx_gpio_get(struct gpio_chip *chip, unsigned int offset, int *value) {
     struct stm32_gpio_chip *gpio = gpiochip_get_data(chip);
-    return HAL_GPIO_ReadPin((GPIO_TypeDef *) gpio->base, offset);
+    *value = HAL_GPIO_ReadPin((GPIO_TypeDef *) gpio->base, offset);
+    return ERR_NONE;
 }
 
 static int stm32f1xx_gpio_set(struct gpio_chip *chip, unsigned int offset, int value) {
@@ -36,9 +37,9 @@ static int stm32f1xx_gpio_get_direction(struct gpio_chip *chip, unsigned int off
         mode = (GPIOx->CRH >> shift) & 0xF;
     }
 
-    if (mode < 0x03) *direction = GPIO_MODE_INPUT;
-    else if (mode < 0x10) *direction = GPIO_MODE_OUTPUT;
-    else *direction = GPIO_MODE_INIT;
+    if (mode < 0x03) *direction = GPIO_MODE_FLAGS_INPUT;
+    else if (mode < 0x10) *direction = GPIO_MODE_FLAGS_OUTPUT;
+    else *direction = GPIO_MODE_FLAGS_INIT;
     return mode;
 }
 
@@ -92,7 +93,6 @@ static int stm32f1xx_gpio_disable_clock(struct gpio_chip *chip, unsigned int off
 }
 
 static int stm32f1xx_gpio_request(struct gpio_chip *chip, unsigned int offset, unsigned int cmd) {
-    struct stm32_gpio_chip *gpio = gpiochip_get_data(chip);
     switch (cmd) {
         case GPIO_CMD_DISABLE_CLK:
             stm32f1xx_gpio_disable_clock(chip, offset);
@@ -114,21 +114,22 @@ static struct gpio_chip chip = {
     .config = stm32f1xx_gpio_config,
     .get = stm32f1xx_gpio_get,
     .set = stm32f1xx_gpio_set,
+    .set_multiple = NULL,
     .base = 0,
     .ngpio = 16,
+    .names =
+            "GPIOA1",
+
 };
 
 static int stm32f1xx_gpio_probe(void) {
     struct stm32_gpio_chip *gpio = {0};
     gpio->gc = chip;
-    gpio->gc.parent = NULL;
     gpio->base = GPIOA;
 
     // register device gpio a to platform device
     chip.label = "stm32f1xx_gpiob";
-    gpio->gc.parent = NULL;
     gpio->base = GPIOB;
-
 
     return ERR_NONE;
 }
