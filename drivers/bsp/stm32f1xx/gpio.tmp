@@ -1,0 +1,47 @@
+int gpio_init(void *fp, struct gpio_config *config)
+{
+    if (fp == NULL || config == NULL)
+        return ERR_NULLPTR;
+
+    GPIO_InitTypeDef init = {
+        .Pin = config->pin,
+        .Mode = config->mode,
+        .Pull = config->pull,
+        .Speed = config->speed
+    };
+
+    HAL_GPIO_Init((GPIO_TypeDef *) fp, &init);
+
+    return ERR_NONE;
+}
+
+int gpio_deinit(void *fp, uint16_t pin_num)
+{
+    if (fp == NULL)
+        return ERR_NULLPTR;
+
+    HAL_GPIO_DeInit((GPIO_TypeDef *) fp, pin_num);
+
+    return ERR_NONE;
+}
+
+int gpio_read(void *fp, uint16_t pin_num, void *val)
+{
+    if (fp == NULL || val == NULL)
+        return ERR_NULLPTR;
+
+    *(uint8_t *)val = (uint8_t)HAL_GPIO_ReadPin((GPIO_TypeDef *) fp, pin_num);
+
+    return ERR_NONE;
+}
+
+int gpio_write(void *fp, uint16_t pin_num, const void *val)
+{
+    if (fp == NULL || val == NULL)
+        return ERR_NULLPTR;
+
+    GPIO_PinState level = (*(uint8_t *)val) ? GPIO_PIN_SET : GPIO_PIN_RESET;
+    HAL_GPIO_WritePin((GPIO_TypeDef *) fp, pin_num, level);
+
+    return ERR_NONE;
+}
