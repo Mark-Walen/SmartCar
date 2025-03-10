@@ -13,6 +13,11 @@ extern "C" {
 #endif
 
 #define __iomem __attribute__((noderef, address_space(2)))
+
+/**
+ * \brief           Device structure forward declaration
+ */
+struct device;
 /**
  * The type of device, "struct device" is embedded in. A class
  * or bus can contain devices of different types
