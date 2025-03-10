@@ -18,19 +18,22 @@ add_library(bsp STATIC
         # BSP Driver
         ${CMAKE_CURRENT_SOURCE_DIR}/gpio.c
         ${CMAKE_CURRENT_SOURCE_DIR}/time.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/uart.c
 )
 #message(STATUS "${STARTUP} ${FLASH}")
 target_compile_definitions(bsp PRIVATE USE_HAL_DRIVER STM32F103xB ${STARTUP} ${FLASH})
 
-target_link_libraries(bsp PRIVATE hal)
+target_link_libraries(bsp PRIVATE hal lwrb)
 
 target_include_directories(bsp PRIVATE
         ${CMAKE_SOURCE_DIR}/
+        ${CMAKE_SOURCE_DIR}/common/inc
         ${CMAKE_SOURCE_DIR}/config/stm32f1xx
-        ${CMAKE_SOURCE_DIR}/drivers/
+        ${CMAKE_SOURCE_DIR}/drivers/bsp/inc
         ${CMAKE_SOURCE_DIR}/drivers/hal/stm32f1xx/inc
         ${CMAKE_SOURCE_DIR}/drivers/hal/stm32f1xx/inc/Legacy
         ${CMAKE_SOURCE_DIR}/drivers/hal/stm32f1xx/core/cmsis/inc
         ${CMAKE_SOURCE_DIR}/drivers/hal/stm32f1xx/core/cmsis/Core/Include
         ${CMAKE_SOURCE_DIR}/drivers/hal/stm32f1xx/core/cmsis/Device/ST/STM32F1xx/Include
+        ${CMAKE_SOURCE_DIR}/lib/lwrb/include
 )
