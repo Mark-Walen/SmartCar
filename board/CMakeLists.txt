@@ -3,7 +3,7 @@ add_library(board STATIC
 )
 
 target_include_directories(board PRIVATE
-    ${CMAKE_SOURCE_DIR}/drivers
+    ${CMAKE_SOURCE_DIR}/drivers/bsp/inc
 )
 
 target_link_libraries(board PRIVATE bsp)
