@@ -24,6 +24,14 @@ struct gpio_config
     uint32_t intr_type;
 };
 
+struct gpio_desc {
+    char *name;
+    uint32_t offset;
+    uint32_t flag;
+
+    struct gpio_chip *chip;
+};
+
 /**
  * <h3>GPIO controller structure.</h3>
  * <p>If you have N GPIO ports, define a new structure with the base address

@@ -1,7 +1,7 @@
 #include "stm32f1xx_hal.h"
 #include "stm32f1xx_hal_gpio.h"
 
-#include "bsp/inc/gpio.h"
+#include "bsp/gpio.h"
 #include "common/inc/errno.h"
 
 struct stm32_gpio_chip {
@@ -15,7 +15,7 @@ void *gpiochip_get_data(struct gpio_chip *gc) {
 
 static int stm32f1xx_gpio_get(struct gpio_chip *chip, unsigned int offset, int *value) {
     struct stm32_gpio_chip *gpio = gpiochip_get_data(chip);
-    *value = HAL_GPIO_ReadPin((GPIO_TypeDef *) gpio->base, offset);
+    *value = HAL_GPIO_ReadPin(gpio->base, offset);
     return ERR_NONE;
 }
 
@@ -116,20 +116,5 @@ static struct gpio_chip chip = {
     .set = stm32f1xx_gpio_set,
     .set_multiple = NULL,
     .base = 0,
-    .ngpio = 16,
-    .names =
-            "GPIOA1",
-
+    .ngpio = 16
 };
-
-static int stm32f1xx_gpio_probe(void) {
-    struct stm32_gpio_chip *gpio = {0};
-    gpio->gc = chip;
-    gpio->base = GPIOA;
-
-    // register device gpio a to platform device
-    chip.label = "stm32f1xx_gpiob";
-    gpio->base = GPIOB;
-
-    return ERR_NONE;
-}
