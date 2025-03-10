@@ -5,6 +5,6 @@
 #ifndef BOARD_H
 #define BOARD_H
 
-#include "bsp/inc/time.h"
+#include "bsp/time.h"
 
 #endif //BOARD_H
