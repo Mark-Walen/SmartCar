@@ -70,6 +70,9 @@ struct uart_config {
     uint32_t oversample;
 
     uint8_t dma_enabled:1;          /* Whether DMA is enabled (true/false) */
+
+    struct gpio_config gpio_tx;
+    struct gpio_config gpio_rx;
 };
 
 struct uart_ops {
@@ -91,8 +94,8 @@ struct uart_port {
     void *data;                /* Device-specific data */
 
     const struct uart_ops *ops; /* UART operations */
-    struct gpio_desc *gpio_tx;  /* GPIO descriptor for TX pin */
-    struct gpio_desc *gpio_rx;  /* GPIO descriptor for RX pin */
+    struct gpio_line *gpio_tx;  /* GPIO descriptor for TX pin */
+    struct gpio_line *gpio_rx;  /* GPIO descriptor for RX pin */
 
     /* Ring buffers for RX and TX */
     uint8_t dma_enabled:1;          /* Whether DMA is enabled (true/false) */
@@ -104,10 +107,31 @@ struct uart_port {
 
     /* IRQ handler (callback function) */
     void (*irq_handler)(struct uart_port *port);
+
+    struct list_head list;
 };
 
-int write(const char *name, uint8_t *buf, size_t len);
-int read(const char *name, uint8_t *data, size_t len);
-int get_char(const char *name, uint8_t *data);
-int put_char(const char *name, uint8_t data);
+struct uart_port_desc {
+    const char *name;
+    const char *label;
+    void *base_addr;
+
+    const char *tx_chip_name;   /* TX gpio chip name */
+    const char *rx_chip_name;   /* RX gpio chip name */
+
+    const uint32_t gpio_tx;     /* TX gpio chip name */
+    const uint32_t gpio_rx;
+};
+
+extern struct uart_port_desc uarts[UART_NUM];
+
+struct uart_port *uart_port_open_by_name(const char *name);
+struct uart_port *uart_port_open_by_label(const char *label);
+void uart_port_close(struct uart_port *port);
+
+int uart_config(const char *name, struct uart_config *config);
+int uart_write(const char *name, uint8_t *buf, size_t len);
+int uart_read(const char *name, uint8_t *data, size_t len);
+int uart_get_char(const char *name, uint8_t *data);
+int uart_put_char(const char *name, uint8_t data);
 #endif //_UART_H

@@ -25,9 +25,18 @@ struct gpio_config
 };
 
 struct gpio_desc {
-    char *name;
-    uint32_t offset;
-    uint32_t flag;
+    const char *chip_name;
+    const char *chip_label;
+    const char *label;
+    const char *name;
+    uint32_t gpio;
+};
+
+struct gpio_line {
+    const char *label;
+    const char *name;
+    uint32_t gpio;
+    int flag;
 
     struct gpio_chip *chip;
 };
@@ -50,6 +59,7 @@ struct gpio_desc {
 struct gpio_chip
 {
     const char *label;
+    const char *name;
     void *data;
     int base;
     uint16_t ngpio;
@@ -71,8 +81,17 @@ struct gpio_chip
     int (*get)(struct gpio_chip *chip, unsigned offset, int *value);
     int (*set)(struct gpio_chip *chip, unsigned offset, int value);
     void (*set_multiple)(struct gpio_chip *chip, unsigned offset, unsigned mask, int value);
+
+    struct list_head list;
 };
 
+struct gpio_chip* gpio_chip_open_by_label(const char *label);
+struct gpio_chip* gpio_chip_open_by_name(const char *name);
+void gpio_chip_close(struct gpio_chip *chip);
+
+struct gpio_line *gpio_chip_get_line(struct gpio_chip *chip, unsigned offset);
+
+extern struct list_head gpio_chips;
 #ifdef __cplusplus
 }
 #endif

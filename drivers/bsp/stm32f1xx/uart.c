@@ -7,12 +7,12 @@
 #include "system/init.h"
 #include <stdlib.h>
 
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof(arr[0]))
+
 struct stm32_uart_port {
     struct uart_port port;
     UART_HandleTypeDef huart;
     void *membase; /* Memory-mapped base address of UART registers */
-
-    struct list_head list;
 };
 
 static LIST_HEAD(uart_ports);
@@ -36,11 +36,11 @@ static void *uart_get_data(struct uart_port *port) {
     return port->data;
 }
 
-static struct stm32_uart_port * find_uart_port_by_name(const char *name) {
-    struct stm32_uart_port *uart, *tmp;
+static struct uart_port * find_uart_port_by_name(const char *name) {
+    struct uart_port *uart, *tmp;
 
     list_for_each_entry_safe(uart, tmp, &uart_ports, list) {
-        if (strcmp(uart->port.name, name) == 0) {
+        if (strcmp(uart->name, name) == 0) {
             return uart;
         }
     }
@@ -48,11 +48,11 @@ static struct stm32_uart_port * find_uart_port_by_name(const char *name) {
     return NULL;
 }
 
-static struct stm32_uart_port * find_uart_port_by_label(const char *label) {
-    struct stm32_uart_port *uart, *tmp;
+static struct uart_port * find_uart_port_by_label(const char *label) {
+    struct uart_port *uart, *tmp;
 
     list_for_each_entry(uart, &uart_ports, list) {
-        if (strcmp(uart->port.label, label) == 0) {
+        if (strcmp(uart->label, label) == 0) {
             return uart;  // Found
         }
     }
@@ -158,50 +158,55 @@ static int stm32f1xx_uart_set_mode(struct uart_port *port, uint32_t word_length,
     return parse_status(status);
 }
 
-void stm32_uart_probe(const char *label, const char *name, void *base_addr) {
+void stm32_uart_probe(const struct uart_port_desc *port_desc) {
     struct stm32_uart_port *uart = malloc(sizeof(struct stm32_uart_port));
+    struct gpio_chip  *rx_chip = gpio_chip_open_by_name(port_desc->rx_chip_name);
+    struct gpio_chip  *tx_chip = gpio_chip_open_by_name(port_desc->tx_chip_name);
+    struct uart_ops ops = {0};
     if (!uart) {
         return;  // Handle allocation failure
     }
 
-    static struct uart_ops ops = {
-        .write = stm32f1xx_uart_write,
-        .read = stm32f1xx_uart_read,
-        .get_char = stm32f1xx_uart_get_char,
-        .put_char = stm32f1xx_uart_put_char,
-        .config = stm32f1xx_uart_config,
-        .flush = NULL,
-        .set_baud = stm32f1xx_uart_set_baud,
-        .set_mode = stm32f1xx_uart_set_mode
-    };
+    // throw an exception if needed.
+    // if (!rx_chip && !tx_chip) {
+    //     return;
+    // }
+
+    // init
+    ops.write = stm32f1xx_uart_write;
+    ops.read = stm32f1xx_uart_read;
+    ops.get_char = stm32f1xx_uart_get_char;
+    ops.put_char = stm32f1xx_uart_put_char;
+    ops.config = stm32f1xx_uart_config;
+    ops.set_baud = stm32f1xx_uart_set_baud;
+    ops.set_mode = stm32f1xx_uart_set_mode;
 
     // Initialize UART instance
-    uart->port.label = label;
+    uart->port.label = port_desc->label;
     uart->port.ops = &ops;
     uart->port.data = uart;
-    uart->port.name = name;
-    uart->membase = base_addr;
+    uart->port.name = port_desc->name;
+    uart->membase = port_desc->base_addr;
     uart->huart = (UART_HandleTypeDef){0};
+    uart->port.gpio_tx = tx_chip ? gpio_chip_get_line(tx_chip, port_desc->gpio_tx) : NULL;
+    uart->port.gpio_rx = rx_chip ? gpio_chip_get_line(rx_chip, port_desc->gpio_rx) : NULL;
 
     // Add to linked list
-    list_add_tail(&uart->list, &uart_ports);
+    list_add_tail(&uart->port.list, &uart_ports);
 }
 
 void stm32_uart_remove(const char *label) {
-    struct stm32_uart_port *uart, *tmp;
-
-    list_for_each_entry_safe(uart, tmp, &uart_ports, list) {
-        if (strcmp(uart->port.label, label) == 0) {
-            list_del(&uart->list);  // Remove from the list
-            free(uart);  // Free memory
-            return;
-        }
+    struct uart_port *uart = find_uart_port_by_label(label);
+    if (uart) {
+        list_del(&uart->list);
+        free(uart);
     }
 }
 
 int stm32f1xx_uart_init(void) {
-    stm32_uart_probe("stm32f1xx-uart1", "USART1", USART1);
-    stm32_uart_probe("stm32f1xx-uart2", "USART2", USART2);
+    for (int i = 0; i < ARRAY_SIZE(uarts); i++) {
+        stm32_uart_probe(&uarts[i]);
+    }
 
     return 0;
 }

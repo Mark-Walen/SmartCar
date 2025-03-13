@@ -4,6 +4,8 @@
 #include "bsp/gpio.h"
 #include "common/inc/errno.h"
 
+LIST_HEAD(gpio_chips);
+
 struct stm32_gpio_chip {
     struct gpio_chip gc;
     void *base;

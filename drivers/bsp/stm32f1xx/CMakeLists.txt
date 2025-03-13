@@ -1,31 +1,15 @@
-if (CHIP_UPPER MATCHES "STM32F103.(.).*")
-    if (CMAKE_MATCH_1 STREQUAL "6")
-        set(FLASH STM32F10X_LD)
-        set(STARTUP STM32F103x6)
-    elseif (CMAKE_MATCH_1 STREQUAL "8" OR CMAKE_MATCH_1 STREQUAL "B")
-        set(FLASH STM32F10X_MD)
-        set(STARTUP STM32F103xB)
-    elseif (CMAKE_MATCH_1 STREQUAL "C" OR CMAKE_MATCH_1 STREQUAL "D" OR CMAKE_MATCH_1 STREQUAL "E")
-        set(FLASH STM32F10X_HD)
-        set(STARTUP STM32F103xE)
-    elseif (CMAKE_MATCH_1 STREQUAL "F" OR CMAKE_MATCH_1 STREQUAL "G")
-        set(FLASH STM32F10X_HD)
-        set(STARTUP STM32F103xG)
-    endif ()
-endif ()
-
-add_library(bsp STATIC
+add_library(stm32f1xx STATIC
         # BSP Driver
         ${CMAKE_CURRENT_SOURCE_DIR}/gpio.c
         ${CMAKE_CURRENT_SOURCE_DIR}/time.c
         ${CMAKE_CURRENT_SOURCE_DIR}/uart.c
 )
-#message(STATUS "${STARTUP} ${FLASH}")
-target_compile_definitions(bsp PRIVATE USE_HAL_DRIVER STM32F103xB ${STARTUP} ${FLASH})
 
-target_link_libraries(bsp PRIVATE hal lwrb)
+target_compile_definitions(stm32f1xx PRIVATE USE_HAL_DRIVER ${STARTUP} ${FLASH})
 
-target_include_directories(bsp PRIVATE
+target_link_libraries(stm32f1xx PRIVATE hal lwrb)
+
+target_include_directories(stm32f1xx PRIVATE
         ${CMAKE_SOURCE_DIR}/
         ${CMAKE_SOURCE_DIR}/common/inc
         ${CMAKE_SOURCE_DIR}/config/stm32f1xx
