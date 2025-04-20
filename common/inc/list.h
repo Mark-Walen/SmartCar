@@ -225,6 +225,15 @@ static inline int list_is_head(const struct list_head *list, const struct list_h
 }
 
 /**
+ * list_empty - tests whether a list is empty
+ * @head: the list to test.
+ */
+static inline int list_empty(const struct list_head *head)
+{
+    return head->next == head;
+}
+
+/**
  * list_first_entry - get the first element from a list
  * @param ptr:	the list head to take the element from.
  * @param type:	the type of the struct this is embedded in.
@@ -321,6 +330,17 @@ static inline int list_is_head(const struct list_head *list, const struct list_h
         !list_entry_is_head(pos, head, member); 			\
         pos = n, n = list_next_entry(n, member))
 
+/**
+ * list_for_each_entry_from - iterate over list of given type from the current point
+ * @param[in] pos:	the type * to use as a loop cursor.
+ * @param[in] head:	the head for your list.
+ * @param[in] member:	the name of the list_head within the struct.
+ *
+ * Iterate over list of given type, continuing from current position.
+ */
+#define list_for_each_entry_from(pos, head, member) 			\
+	for (; !list_entry_is_head(pos, head, member);			\
+	     pos = list_next_entry(pos, member))
 
 #ifndef offsetof
     #define offsetof(TYPE, MEMBER) ((size_t)&((TYPE *)0)->MEMBER)
