@@ -160,8 +160,8 @@ static int stm32f1xx_uart_set_mode(struct uart_port *port, uint32_t word_length,
 
 void stm32_uart_probe(const struct uart_port_desc *port_desc) {
     struct stm32_uart_port *uart = malloc(sizeof(struct stm32_uart_port));
-    struct gpio_chip  *rx_chip = gpio_chip_open_by_name(port_desc->rx_chip_name);
-    struct gpio_chip  *tx_chip = gpio_chip_open_by_name(port_desc->tx_chip_name);
+    struct gpio_chip *rx_chip = gpio_chip_open_by_name(port_desc->rx_chip_name);
+    struct gpio_chip *tx_chip = gpio_chip_open_by_name(port_desc->tx_chip_name);
     struct uart_ops ops = {0};
     if (!uart) {
         return;  // Handle allocation failure
@@ -196,10 +196,13 @@ void stm32_uart_probe(const struct uart_port_desc *port_desc) {
 }
 
 void stm32_uart_remove(const char *label) {
-    struct uart_port *uart = find_uart_port_by_label(label);
-    if (uart) {
-        list_del(&uart->list);
+    struct uart_port *port = find_uart_port_by_label(label);
+    struct stm32_uart_port *uart;
+    if (port) {
+        uart = (struct stm32_uart_port *) port->data;
+        list_del(&port->list);
         free(uart);
+        uart = NULL;
     }
 }
 
