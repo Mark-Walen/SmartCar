@@ -7,13 +7,16 @@
 extern "C" {
 #endif
 
-#define GPIO_MODE_FLAGS_INPUT         0x0
-#define GPIO_MODE_FLAGS_OUTPUT        0x1
-#define GPIO_MODE_FLAGS_INIT          0x2
+#define GPIO_MODE_FLAGS_INPUT           0x0
+#define GPIO_MODE_FLAGS_OUTPUT          0x1
+#define GPIO_MODE_FLAGS_INIT            0x2
 
 #define GPIO_CMD_ENABLE_CLK             0x00
 #define GPIO_CMD_DISABLE_CLK            0x01
 #define GPIO_CMD_INTR_RISING            0x02
+
+#define GPIO_CHIP_NUM                   3
+#define GPIO_NUM                        2
 
 struct gpio_config
 {
@@ -24,9 +27,21 @@ struct gpio_config
     uint32_t intr_type;
 };
 
+struct gpio_chip_desc {
+    const char *label;
+    const char *name;
+    void *base_addr;
+    int base;
+    uint16_t ngpio;
+};
+
+// For init
 struct gpio_desc {
-    const char *chip_name;
+    // gpio chip desc
     const char *chip_label;
+    const char *chip_name;
+    const uint32_t base_addr;
+
     const char *label;
     const char *name;
     uint32_t gpio;
@@ -39,6 +54,7 @@ struct gpio_line {
     int flag;
 
     struct gpio_chip *chip;
+    struct list_head node;
 };
 
 /**
@@ -80,11 +96,13 @@ struct gpio_chip
     int (*config)(struct gpio_chip *chip, unsigned offset, struct gpio_config *config);
     int (*get)(struct gpio_chip *chip, unsigned offset, int *value);
     int (*set)(struct gpio_chip *chip, unsigned offset, int value);
-    void (*set_multiple)(struct gpio_chip *chip, unsigned offset, unsigned mask, int value);
+    int (*set_multiple)(struct gpio_chip *chip, unsigned offset, unsigned mask, int value);
 
     struct list_head list;
+    struct list_head lines;
 };
-
+struct gpio_chip * find_gpio_chip_by_name(const char *name);
+struct gpio_chip * find_gpio_chip_by_label(const char *label);
 struct gpio_chip* gpio_chip_open_by_label(const char *label);
 struct gpio_chip* gpio_chip_open_by_name(const char *name);
 void gpio_chip_close(struct gpio_chip *chip);
@@ -92,6 +110,8 @@ void gpio_chip_close(struct gpio_chip *chip);
 struct gpio_line *gpio_chip_get_line(struct gpio_chip *chip, unsigned offset);
 
 extern struct list_head gpio_chips;
+extern struct gpio_chip_desc gpio_chip_table[GPIO_CHIP_NUM];
+extern struct gpio_desc gpio_table[GPIO_NUM];
 #ifdef __cplusplus
 }
 #endif
